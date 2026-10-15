@@ -1,0 +1,42 @@
+{
+  "name": "smash-arena",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Smash Arena - browser-based 2D platform fighter. Monorepo root (planning + workspace scripts only).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.9.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "build:shared": "npm run build --workspace @smash-arena/shared",
+    "build:server": "npm run build --workspace @smash-arena/server",
+    "build:client": "npm run build --workspace @smash-arena/client",
+    "predev:client": "npm run build:shared",
+    "dev:client": "npm run dev --workspace @smash-arena/client",
+    "predev:server": "npm run build:shared",
+    "dev:server": "npm run dev --workspace @smash-arena/server",
+    "start:server": "npm run start --workspace @smash-arena/server",
+    "preview:client": "npm run preview --workspace @smash-arena/client",
+    "pretypecheck": "npm run build:shared",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "pretest": "npm run build:shared",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "clean": "node scripts/clean.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "jsdom": "30.1.3",
+    "typescript": "6.0.3",
+    "vitest": "5.0.4"
+  }
+}

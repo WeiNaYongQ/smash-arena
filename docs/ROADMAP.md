@@ -2,6 +2,8 @@
 
 **Status:** All milestones planned; none are marked complete by this document.
 
+**Current position (2026-10-15):** The first M1 PR — project foundation — is open and awaiting manual review. M1 is not complete until that PR is reviewed and merged. No other milestone has started. See `PROJECT_STATUS.md` for verified detail.
+
 Each milestone may require multiple PRs. Each PR must have one focused scope, explicit acceptance criteria, relevant tests, a documentation update, and manual review before merging.
 
 ## M0 — Planning and repository setup

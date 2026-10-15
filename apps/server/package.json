@@ -1,0 +1,23 @@
+{
+  "name": "@smash-arena/server",
+  "version": "0.1.0",
+  "description": "Smash Arena session server. Milestone M1: health check only.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@smash-arena/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3"
+  }
+}
