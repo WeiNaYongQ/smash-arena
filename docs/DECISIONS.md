@@ -53,16 +53,18 @@ This file records durable product and engineering decisions. New decisions shoul
 
 ## D-008 — Proposed TypeScript client/server architecture
 
-**Status:** Proposed; validate in foundation milestone  
+**Status:** Accepted for the foundation; gameplay architecture still to be proven  
 **Decision:** Phaser 3 + TypeScript + Vite client; Node.js + TypeScript server; shared protocol package.  
 **Reason:** Clear separation between rendering, simulation, and networking.  
-**Consequences:** Validate dependencies and low-end hardware performance before expanding the scaffold.
+**Consequences:** Validate dependencies and low-end hardware performance before expanding the scaffold.  
+**Evidence:** The M1 foundation task installed and built this stack successfully: `npm run typecheck` exit 0, `npm test` 131 tests passed, `npm run build` succeeded for all three packages. Low-end hardware performance is still unmeasured.
 
 ## D-009 — WebSocket library not yet selected
 
-**Status:** Open  
+**Status:** Open — confirmed still unnecessary as of the M1 foundation task  
 **Decision needed:** Compare Socket.IO and Colyseus for room lifecycle, local hosting, client support, testability, maintenance, and deployment.  
-**Rule:** Do not silently select one in a large implementation. Record the comparison and recommendation.
+**Rule:** Do not silently select one in a large implementation. Record the comparison and recommendation.  
+**Note (M1):** The foundation PR adds no networking at all, so selecting a library there would have been a guess. The server currently uses plain `node:http` for a single health route. Run the comparison as its own task before milestone M6 (phone controller) or M8 (online rooms), whichever comes first.
 
 ## D-010 — Server-authoritative online combat
 
@@ -70,3 +72,28 @@ This file records durable product and engineering decisions. New decisions shoul
 **Decision:** Online clients send validated inputs; server determines authoritative game outcomes.  
 **Reason:** Clients should not be trusted to report their own hits, damage, stocks, or wins.  
 **Consequences:** The server simulation and protocol require robust validation and tests. This does not guarantee perfect anti-cheat.
+
+## D-011 — Foundation tooling: npm workspaces, Vitest, TypeScript 6
+
+**Status:** Accepted (M1 foundation)  
+**Decision:** One npm-workspaces monorepo (`apps/*`, `packages/*`) with a committed `package-lock.json`; Vitest 5 as the single test runner for every workspace; TypeScript 6.0.3 with strict options shared through `tsconfig.base.json`; GitHub Actions running `npm ci` + typecheck + test + build on Node 22.  
+**Alternatives considered:** pnpm workspaces (faster and stricter isolation, but pnpm is not installed in the working environment and npm workspaces already satisfy the requirement); Jest (a second toolchain for no benefit, since Vitest shares Vite's resolver and the client is already Vite-based); TypeScript 7.0.2, the current registry `latest`, which is the native-port line (not adopted, to avoid pairing an unproven compiler with a brand-new toolchain in the same PR).  
+**Reason:** Fewest moving parts that still give a real monorepo boundary, one command for all tests, and reproducible CI installs.  
+**Consequences:** Contributors must use npm >= 10.9 and Node >= 22.12. `packages/shared` is consumed through its built `dist/` output, so `npm run pretest`/`pretypecheck`/`predev:*` build it first. TypeScript 7 and Vitest/Vite majors should be re-evaluated deliberately, not by a blind `npm update`.
+
+## D-012 — Stay on Phaser 3 while Phaser 4 is the registry latest
+
+**Status:** Accepted (M1 foundation); re-evaluate as a separate task  
+**Decision:** Pin `phaser` to **3.90.0** in `apps/client`.  
+**Context:** The planning documents specify Phaser 3. At the time of the foundation task, `phaser@latest` on the registry resolved to **4.2.1**, and `3.90.0` is the newest 3.x release. Phaser 4 is a major-version successor with breaking API changes.  
+**Alternatives considered:** Adopting Phaser 4 immediately (rejected — it is an architectural migration, not a scaffolding detail, and doing it inside the foundation PR would hide a large change behind a small one).  
+**Reason:** The foundation task's job is to validate the documented stack, not to change it.  
+**Consequences:** A dedicated comparison task is needed before M2 grows much larger, because every scene written on Phaser 3 is migration work later. That task must cover the renderer API, physics plugins, input, asset loading, TypeScript typings, and bundle size.
+
+## D-013 — Server uses plain node:http; health contract lives in the shared package
+
+**Status:** Accepted (M1 foundation)  
+**Decision:** The server is built directly on `node:http` with no framework. `GET /health` is the only route. The response shape (`status`, `service`, `version`, `protocolVersion`, `uptimeSeconds`, `timestamp`) is declared in `packages/shared/src/health.ts` with a runtime `isHealthStatus` guard, and the server binds to `127.0.0.1` unless `HOST` says otherwise.  
+**Alternatives considered:** Express or Fastify (rejected — a single JSON route does not justify a dependency, and the eventual WebSocket layer may bring its own HTTP integration); defining the health shape only in the server (rejected — clients, CI probes, and monitoring would each invent their own copy).  
+**Reason:** Fewest dependencies, and one contract both sides can assert against.  
+**Consequences:** When rooms and simulation arrive, revisit whether a router/framework is worth adding, and keep provider- or framework-specific code out of the simulation. Loopback-by-default means local-LAN play must set `HOST=0.0.0.0` explicitly, which is the safer default for a laptop-hosted session.

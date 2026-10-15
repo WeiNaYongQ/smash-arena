@@ -1,0 +1,22 @@
+{
+  "name": "@smash-arena/client",
+  "version": "0.1.0",
+  "description": "Smash Arena browser client. Milestone M1: placeholder screen only.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@smash-arena/shared": "*",
+    "phaser": "3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
+  }
+}

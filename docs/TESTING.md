@@ -1,6 +1,6 @@
 # Testing Strategy
 
-**Status:** Planned test requirements. No application tests are implied to have passed.
+**Status:** Section 2 reflects tests that actually exist and were run in the M1 foundation task. Sections 3 to 10 remain planned requirements.
 
 ## 1. General rules
 
@@ -13,12 +13,29 @@
 
 ## 2. Foundation checks
 
-- Client development command starts successfully.
-- Server starts and responds to its health check.
-- Shared package imports work in client and server.
-- Automated test command runs.
-- Production/build command succeeds.
-- Setup instructions work from a clean checkout, where practical.
+Implemented as of the M1 foundation task. Commands run from the repository root.
+
+| Check | Command | How it is covered |
+| --- | --- | --- |
+| Client development command starts | `npm run dev:client` | Manual/agent run: Vite serves `http://127.0.0.1:5173/` with HTTP 200. Not covered by an automated test. |
+| Server starts and responds to its health check | `npm run dev:server`, `curl http://127.0.0.1:8787/health` | Automated: `apps/server/src/app.test.ts` binds an ephemeral port and asserts status, headers, and body. Also run manually with `curl`. |
+| Shared package imports work in client and server | `npm test` | Automated: `tests/foundation.test.ts` imports `@smash-arena/shared` through the workspace link and asserts both a client module and the server health payload use it. |
+| Automated test command runs | `npm test` | Vitest 5, single root config. `pretest` builds `packages/shared` first. |
+| Typecheck | `npm run typecheck` | Runs `tsc` in all three workspaces. |
+| Production/build command succeeds | `npm run build` | Builds `shared` (tsc), `server` (tsc), `client` (tsc --noEmit + vite build). `npm run preview:client` serves the result. |
+| Everything CI runs | `npm run verify` | `typecheck` + `test` + `build`, mirrored by `.github/workflows/ci.yml`. |
+| Placeholder screen renders | — | Partially automated: `apps/client/src/scenes/PlaceholderScene.test.ts` boots Phaser headlessly inside jsdom with a stubbed 2D context and asserts the scene activates and creates the expected display objects. **This is not a rendering test.** Visual confirmation in a real browser is still a manual step. |
+| Setup instructions work from a clean checkout | `npm ci && npm run verify` | Covered by CI. Not re-verified by hand on a second machine. |
+
+### What the headless client test does and does not prove
+
+`apps/client/src/testing/headlessPhaser.ts` stubs `HTMLCanvasElement.getContext`, `Image` loading, and `window.focus` so Phaser can boot under jsdom in HEADLESS mode. It proves:
+
+- the scene class loads, registers under its key, and becomes active;
+- `create()` runs without throwing;
+- the expected number and types of display objects exist, with the expected text.
+
+It does not prove pixels, WebGL behaviour, real canvas text measurement, frame rate, or how the screen looks. Treat any visual claim as untested until a human opens the page.
 
 ## 3. Movement and physics
 

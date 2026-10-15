@@ -1,6 +1,6 @@
 # Technical Design
 
-**Status:** Proposed architecture. Validate choices in the foundation milestone before treating them as implemented.
+**Status:** Proposed architecture. The tooling in section 2 and the layout in section 3 were validated and implemented by the M1 foundation task; sections 4 to 11 remain design intent only.
 
 ## 1. Goals
 
@@ -11,25 +11,32 @@
 - Keep hosting-provider details out of core game logic.
 - Test core mechanics without requiring a live network.
 
-## 2. Proposed stack
+## 2. Stack
 
-- Client: Phaser 3, TypeScript, Vite.
-- Server: Node.js and TypeScript.
-- Transport: WebSockets.
-- Candidate room/network libraries: Socket.IO or Colyseus. Compare maintenance, local-host support, room lifecycle, deployment needs, and testing ergonomics in a small validation task before selecting one.
-- Shared package: input actions, validated message schemas, fighter data, and common contracts.
-- Testing: unit tests and browser/multiplayer integration tests. Select exact test tooling during the foundation task.
+Selected and in use as of the M1 foundation task. Rationale is recorded in `DECISIONS.md` (D-011, D-012, D-013).
+
+| Concern | Choice | Notes |
+| --- | --- | --- |
+| Monorepo | npm workspaces (`apps/*`, `packages/*`) | Node >= 22.12, npm >= 10.9. `package-lock.json` is committed; CI runs `npm ci`. |
+| Language | TypeScript 6.0.3, `strict`, `noUncheckedIndexedAccess` | Shared options in `tsconfig.base.json`. The 7.x native-port line is not adopted yet (D-011). |
+| Client | Phaser 3.90.0 + Vite 8 | Pinned to the Phaser 3 line. Phaser 4 is now the registry `latest`; see D-012. |
+| Server | Node.js `node:http`, no framework | One route today (`GET /health`). No dependency to justify yet. |
+| Shared package | `@smash-arena/shared`, built with `tsc` to `dist/` with declarations | Consumed by both apps through the workspace link, not through TS path aliases. |
+| Test runner | Vitest 5, single root config | Node environment by default; one client test opts into jsdom to boot Phaser headlessly. |
+| CI | GitHub Actions, `npm ci` + typecheck + test + build | `.github/workflows/ci.yml`. |
+| Transport | WebSockets | **Planned.** Nothing opens a socket yet. |
+| Room/network library | Socket.IO **or** Colyseus | **Still open (D-009).** Compare maintenance, local-host support, room lifecycle, deployment needs, and testing ergonomics in a dedicated task before selecting one. |
 
 Do not add dependencies without a clear reason. Record significant decisions in `DECISIONS.md`.
 
-## 3. Planned repository boundaries
+## 3. Repository boundaries
 
-- `apps/client`: scenes, rendering, menus, local device input, and network client.
-- `apps/server`: sessions, simulation, physics, combat, validation, and room lifecycle.
-- `packages/shared`: shared types, protocol schemas, and data definitions.
-- `tests`: unit and integration tests.
+- `apps/client`: scenes, rendering, menus, local device input, and network client. Today: `main.ts`, `gameConfig.ts`, `scenes/PlaceholderScene.ts`, and the framework-free `placeholder/` modules.
+- `apps/server`: sessions, simulation, physics, combat, validation, and room lifecycle. Today: `index.ts` bootstrap, `app.ts` HTTP server, `health.ts`, `config.ts`, `version.ts`.
+- `packages/shared`: shared types, protocol schemas, and data definitions. Today: `protocol/actions.ts`, `protocol/messages.ts`, `protocol/version.ts`, `match/matchDefaults.ts`, `health.ts`.
+- `tests`: cross-package integration tests.
 
-The exact directory structure may be adjusted during foundation work if the rationale is documented and the public interfaces remain clear.
+**Documented layout adjustment.** Unit tests live next to the source they cover (`**/*.test.ts`) rather than in a top-level `tests/` tree, because that keeps a test beside the module it protects and needs no path mapping. `tests/` is kept for checks that genuinely span workspaces, such as "the shared package resolves for both applications" and "the server health payload matches the shared contract". The public package interfaces are unchanged, which is the condition section 3 of the original document set for adjusting the structure.
 
 ## 4. Simulation
 
@@ -95,6 +102,8 @@ The local mode must not rely on a cloud server, paid provider, or internet acces
 ## 10. Observability and cleanup
 
 Provide basic health reporting for the server, useful development logs, session lifecycle visibility, and clean shutdown behavior. Do not log join credentials or secrets. Remove stale rooms and disconnected controller state safely.
+
+Implemented so far: `GET /health` (contract in `packages/shared/src/health.ts`), startup logging that prints the listening address and the health URL, `EADDRINUSE` advice, and SIGINT/SIGTERM graceful shutdown with a 2-second force-exit fallback. No credentials exist yet, so nothing sensitive can be logged.
 
 ## 11. Performance and testing
 

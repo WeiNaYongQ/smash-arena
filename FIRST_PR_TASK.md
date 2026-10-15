@@ -1,6 +1,6 @@
 # First Implementation PR — Project Foundation
 
-**Status:** Proposed task. Do not execute until the project owner approves the planning pack.
+**Status:** Executed. The project owner assigned this task, and it is implemented in the open M1 foundation PR. Acceptance-criterion results and actual test output are recorded in `PROJECT_STATUS.md` ("Test evidence") and in the PR description. This file is kept unchanged below as the original spec so the review can be checked against it; do not reuse it as a spec for new work without re-review.
 
 ## Goal
 
